@@ -1,22 +1,45 @@
-import torchaudio
 import torch
-import os
+import torchaudio.transforms as T
+import utils
 
 
-def load_train():
-    if not os.path.isdir('./data'):
-        os.makedirs('./data')
+class SpecGen(torch.nn.Module):
+    # implementation of spectrogram generation taken from pytorch documentation
+    # https://pytorch.org/audio/stable/transforms.html
+    def __int__(self, input_freq=16000, resample_freq=8000, n_fft=1024, n_mel=256, stretch_factor=0.8):
+        #super(SpecGen, self).__init__()
+        self.resample = T.Resample(orig_freq=input_freq, new_freq=resample_freq)
+        self.spec = T.Spectrogram(n_fft=n_fft, power=2)
+        self.spec_aug = torch.nn.Sequential(
+            T.TimeStretch(stretch_factor, fixed_rate=True),
+            T.FrequencyMasking(freq_mask_param=80),
+            T.TimeMasking(time_mask_param=80)
+        )
 
-    return torchaudio.datasets.LIBRISPEECH("./data",
-                                           url="train-clean-100",
-                                           download=not os.path.isdir('./data/LibriSpeech/train-clean-100'))
+        self.mel_scale = T.MelScale(n_mels=n_mel, sample_rate=resample_freq, n_stft=n_fft // 2 + 1)
+
+    def forward(self, waveform):
+        resampled = self.resample(waveform)
+        spec = self.spec(resampled)
+        spec = self.spec_aug(spec)
+        mel = self.mel_scale(spec)
+        return mel
 
 
-def load_test():
-    if not os.path.isdir('./data'):
-        os.makedirs('./data')
+def generate_spectrograms(type, device):
+    if type == 'train':
+        data = utils.load_train()
+    elif type == 'test':
+        data = utils.load_test()
+    else:
+        raise Exception("Invalid data type, must be 'train' or 'test'")
 
-    return torchaudio.datasets.LIBRISPEECH("./data",
-                                           url="test-clean",
-                                           download=not os.path.isdir('./data/LibriSpeech/train-clean-100'))
+    spec_gen = SpecGen()
+    spec_gen.to(device)
 
+    spectrograms = []
+    for waveform, _, text, speaker, _, _ in data:
+        spectrogram = spec_gen(waveform)
+        spectrograms.append(spectrogram)
+
+generate_spectrograms("train", torch.device("cuda"))
