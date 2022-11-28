@@ -19,7 +19,7 @@ def load_test():
 
     return torchaudio.datasets.LIBRISPEECH("./data",
                                            url="test-clean",
-                                           download=not os.path.isdir('./data/LibriSpeech/train-clean-100'))
+                                           download=not os.path.isdir('./data/LibriSpeech/test-clean'))
 
 
 def generate_spectrograms(data_type, device):
