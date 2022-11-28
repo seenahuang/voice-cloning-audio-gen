@@ -2,6 +2,7 @@ import torchaudio
 import torch
 import os
 import dataloader
+from yaml import safe_load, Loader
 
 
 def load_train():
@@ -48,3 +49,15 @@ def generate_spectrograms(data_type, device):
         spectrograms.append(spectrogram)
 
     return spectrograms
+
+
+def retrieve_hyperparams(config_file_name):
+    with open(f'./configs/{config_file_name}') as f:
+        config = safe_load(f)
+
+    params = {}
+    for key in config:
+        for k, v in config[key].items():
+            params[k] = v
+
+    return params
