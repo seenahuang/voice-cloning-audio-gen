@@ -24,23 +24,3 @@ class SpecGen(torch.nn.Module):
         spec = self.spec_aug(spec)
         mel = self.mel_scale(spec)
         return mel
-
-
-def generate_spectrograms(data_type, device):
-    if data_type == 'train':
-        data = utils.load_train()
-    elif data_type == 'test':
-        data = utils.load_test()
-    else:
-        raise Exception("Invalid data type, must be 'train' or 'test'")
-
-    spec_gen = SpecGen()
-    spec_gen.to(device)
-
-    spectrograms = []
-    for waveform, _, text, speaker, _, _ in data:
-        spectrogram = spec_gen(waveform.to(device)).squeeze(0)
-        spectrograms.append(spectrogram)
-
-
-generate_spectrograms("train", torch.device("cuda"))
