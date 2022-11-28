@@ -13,6 +13,15 @@ def load_train():
                                            download=not os.path.isdir('./data/LibriSpeech/train-clean-100'))
 
 
+def load_validation():
+    if not os.path.isdir('./data'):
+        os.makedirs('./data')
+
+    return torchaudio.datasets.LIBRISPEECH("./data",
+                                           url="dev-clean",
+                                           download=not os.path.isdir('./data/LibriSpeech/dev-clean'))
+
+
 def load_test():
     if not os.path.isdir('./data'):
         os.makedirs('./data')
