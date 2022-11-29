@@ -1,12 +1,11 @@
 import torch
 import torchaudio.transforms as T
-import utils
 
 
 class SpecGen(torch.nn.Module):
     # implementation of spectrogram generation taken from pytorch documentation
     # https://pytorch.org/audio/stable/transforms.html
-    def __init__(self, input_freq=16000, resample_freq=8000, n_fft=1024, n_mel=256, stretch_factor=0.8):
+    def __init__(self, input_freq=16000, resample_freq=8000, n_fft=1024, n_mel=40, stretch_factor=0.8):
         super(SpecGen, self).__init__()
         self.resample = T.Resample(orig_freq=input_freq, new_freq=resample_freq)
         self.spec = T.Spectrogram(n_fft=n_fft, power=2)
@@ -22,5 +21,5 @@ class SpecGen(torch.nn.Module):
         resampled = self.resample(waveform)
         spec = self.spec(resampled)
         spec = self.spec_aug(spec)
-        mel = self.mel_scale(spec)
-        return mel
+        mel = self.mel_scale(spec).squeeze(0)
+        return torch.transpose(mel, 0, 1)

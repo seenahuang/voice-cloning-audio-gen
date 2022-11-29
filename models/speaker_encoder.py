@@ -21,7 +21,8 @@ class SpeakerEncoder(torch.nn.Module):
 
     def forward(self, data):
         """
-        Forward call of speaker encoder model
+        Forward call of speaker encoder model on multiple speakers.
+        Each batch will have the same number of utterances for each speaker.
 
         :param data: Tensor of mel spectrograms in the shape of (batch, frames, channels)
         :return speaker embeddings of shape (batch, embedding_size)

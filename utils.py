@@ -1,8 +1,9 @@
 import torchaudio
 import torch
 import os
-import dataloader
-from yaml import safe_load, Loader
+from dataloader import SpecGen
+from yaml import safe_load
+import math
 
 
 def load_train():
@@ -40,15 +41,18 @@ def generate_spectrograms(data_type, device):
     else:
         raise Exception("Invalid data type, must be 'train' or 'test'")
 
-    spec_gen = dataloader.SpecGen()
+    spec_gen = SpecGen()
     spec_gen.to(device)
 
-    spectrograms = []
+    speaker_to_spec = {}
     for waveform, _, text, speaker, _, _ in data:
-        spectrogram = spec_gen(waveform.to(device)).squeeze(0)
-        spectrograms.append(spectrogram)
+        spectrogram = spec_gen(waveform.to(device))
+        if speaker in speaker_to_spec:
+            speaker_to_spec[speaker].append(spectrogram)
+        else:
+            speaker_to_spec[speaker] = [spectrogram]
 
-    return spectrograms
+    return speaker_to_spec
 
 
 def retrieve_hyperparams(config_file_name):
