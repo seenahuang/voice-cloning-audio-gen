@@ -1,9 +1,8 @@
 import torchaudio
-import torch
+import numpy as np
 import os
 from dataloader import SpecGen
 from yaml import safe_load
-import math
 
 
 def load_train():
@@ -33,26 +32,18 @@ def load_test():
                                            download=not os.path.isdir('./data/LibriSpeech/test-clean'))
 
 
-def generate_spectrograms(data_type, device):
-    if data_type == 'train':
-        data = load_train()
-    elif data_type == 'test':
-        data = load_test()
-    else:
-        raise Exception("Invalid data type, must be 'train' or 'test'")
-
+def generate_spectrograms(data, device):
     spec_gen = SpecGen()
     spec_gen.to(device)
 
-    speaker_to_spec = {}
-    for waveform, _, text, speaker, _, _ in data:
+    spectrograms = []
+    speakers = []
+    for waveform, _, _, speaker, _, _ in data:
         spectrogram = spec_gen(waveform.to(device))
-        if speaker in speaker_to_spec:
-            speaker_to_spec[speaker].append(spectrogram)
-        else:
-            speaker_to_spec[speaker] = [spectrogram]
+        spectrograms.append(spectrogram)
+        speakers.append(speaker)
 
-    return speaker_to_spec
+    return speakers, spectrograms
 
 
 def retrieve_hyperparams(config_file_name):
@@ -65,3 +56,11 @@ def retrieve_hyperparams(config_file_name):
             params[k] = v
 
     return params
+
+
+def train(epoch, data_loader, model, criterion, optimizer):
+    for batch, spec_speakers in enumerate(data_loader):
+        spec_speakers = sorted(spec_speakers, key=lambda x: x[0])
+        spectrograms = [x[1] for x in spec_speakers]
+        speakers = [x[0] for x in spec_speakers]
+

@@ -14,7 +14,7 @@ class SpeakerEncoder(torch.nn.Module):
         :param embedding_size: final speaker embedding size
         """
         super(SpeakerEncoder, self).__init__()
-        self.LSTM = torch.nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
+        self.LSTM = torch.nn.LSTM(input_size, hidden_size, num_layers=num_layers, batch_first=True)
         self.linear = torch.nn.Linear(hidden_size, embedding_size)
         self.relu = torch.nn.ReLU()
         self.to(device)
