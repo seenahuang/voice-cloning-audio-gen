@@ -1,0 +1,10 @@
+train:
+  batch_size: 128
+  learning_rate: 0.05
+  epochs: 50
+
+model:
+  input_size: 40
+  hidden_size: 128
+  embedding_size: 256
+  num_layers: 3
