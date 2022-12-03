@@ -22,4 +22,4 @@ class SpecGen(torch.nn.Module):
         spec = self.spec(resampled)
         spec = self.spec_aug(spec)
         mel = self.mel_scale(spec).squeeze(0)
-        return torch.transpose(mel, 0, 1)
+        return mel
