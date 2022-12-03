@@ -50,9 +50,28 @@ class EndToEndLoss(torch.nn.Module):
     def scaled_cos_similarity(self, emb_vec, centroid):
         return self.w * self.cos_similarity(emb_vec, centroid) + self.b
 
+    def softmax_loss(self, emb_vec, cos_sim_matrix):
+        loss = []
+
+        for i in range(len(emb_vec)):
+            row = []
+            for j in range(len(emb_vec[0])):
+                row.append(-torch.nn.functional.log_softmax(cos_sim_matrix[i,j], 0)[i])
+            row = torch.stack(row)
+            loss.append(row)
+
+        return torch.stack(loss).sum()
+
+
+
     def forward(self, input):
         #TODO: define forward function to calculate end to end loss.
         #get centroid
+        centroids = torch.mean(input, dim=1)
         #get similarity matrix
-        #get loss
+        cos_sim_matrix = self.scaled_cos_similarity(input, centroids)
 
+        #get loss
+        loss = self.softmax_loss(input, cos_sim_matrix)
+
+        return loss
