@@ -33,26 +33,25 @@ def load_test():
                                            download=not os.path.isdir('./data/LibriSpeech/test-clean'))
 
 
-def generate_spectrograms(data_type, device):
-    if data_type == 'train':
-        data = load_train()
-    elif data_type == 'test':
-        data = load_test()
-    else:
-        raise Exception("Invalid data type, must be 'train' or 'test'")
-
+def generate_spectrograms(data, device):
     spec_gen = SpecGen()
     spec_gen.to(device)
+    #TODO: figure out how to make spectrograms the same size
+    spec_size = 268
 
-    speaker_to_spec = {}
-    for waveform, _, text, speaker, _, _ in data:
+    spectrograms = torch.empty((len(data), spec_size, 40))
+    speakers = torch.empty((len(data)))
+    for idx, (waveform, _, _, speaker, _, _) in enumerate(data):
         spectrogram = spec_gen(waveform.to(device))
-        if speaker in speaker_to_spec:
-            speaker_to_spec[speaker].append(spectrogram)
-        else:
-            speaker_to_spec[speaker] = [spectrogram]
+        if spectrogram.shape[1] < spec_size:
+            pad_amount = spec_size - spectrogram.shape[1]
+            first_pad = math.ceil(pad_amount/2)
+            second_pad = math.floor(pad_amount/2)
+            spectrogram = torch.nn.functional.pad(input=spectrogram, pad=(first_pad, second_pad), value=0)
+        spectrograms[idx] = torch.transpose(spectrogram, 0, 1)
+        speakers[idx] = speaker
 
-    return speaker_to_spec
+    return spectrograms, speakers
 
 
 def retrieve_hyperparams(config_file_name):
@@ -65,3 +64,19 @@ def retrieve_hyperparams(config_file_name):
             params[k] = v
 
     return params
+
+
+def train(epoch, data_loader, model, optimizer, criterion):
+    for idx, (spectrograms, speakers) in enumerate(data_loader):
+        if torch.cuda.is_available():
+            spectrograms = spectrograms.cuda()
+            speakers = speakers.cuda()
+
+        out = model.forward(spectrograms)
+        # TODO: make sure loss forward method uses embeddings, speaker separated?
+        loss = criterion(out, speakers)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        #TODO: calculate performance metric and print out update?

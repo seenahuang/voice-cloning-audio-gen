@@ -24,10 +24,12 @@ class SpeakerEncoder(torch.nn.Module):
         Forward call of speaker encoder model on multiple speakers.
         Each batch will have the same number of utterances for each speaker.
 
-        :param data: Tensor of mel spectrograms in the shape of (batch, frames, channels)
-        :return speaker embeddings of shape (batch, embedding_size)
+        :param data: Tensor of mel spectrograms in the shape of (batch_size, frames, channels)
+        :return speaker embeddings of shape (batch_size, embedding_size)
         """
         _, (hidden, _) = self.LSTM(data)
         # apply linear to hidden state of the last layer
         embeddings = self.relu(self.linear(hidden[-1]))
-        return embeddings / torch.linalg.norm(embeddings, dim=1, ord=2)
+        norm = torch.linalg.norm(embeddings, dim=1, ord=2)
+        embeddings_norm = torch.div(torch.transpose(embeddings, 0, 1), norm)
+        return torch.transpose(embeddings_norm, 0, 1)
