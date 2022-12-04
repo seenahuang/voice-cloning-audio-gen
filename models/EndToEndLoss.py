@@ -2,7 +2,7 @@ import torch
 
 class EndToEndLoss(torch.nn.Module):
 
-    def __init__(self, w, b, loss_method, device):
+    def __init__(self, w, b, device):
         """
            Generalized End-to-End loss defined based on https://arxiv.org/abs/1710.10467
            Args:
@@ -13,10 +13,9 @@ class EndToEndLoss(torch.nn.Module):
         :param b: initial bias parameter
        """
         super(EndToEndLoss, self).__init__()
-        self.w = w
-        self.b = b
-        self.loss_method=loss_method
-        self.device=device
+        self.w = torch.nn.Parameter(torch.tensor(w)).to(device)
+        self.b = torch.nn.Parameter(torch.tensor(b)).to(device)
+        self.device = device
 
 
     def calc_new_centroids(self, emb_vec, centroids, speaker_idx, utterance_idx):

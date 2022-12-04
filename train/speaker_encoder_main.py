@@ -25,6 +25,6 @@ if __name__ == "__main__":
                              embedding_size=params['embedding_size'])
     optimizer = torch.optim.SGD(encoder.parameters(), params['learning_rate'])
     #TODO: initialize E2E loss
-    criterion = EndToEndLoss()
+    criterion = EndToEndLoss(10.0, -5.0, device)
     for epoch in range(params['epochs']):
         utils.train(epoch, train_loader, encoder, optimizer, criterion)
