@@ -4,7 +4,14 @@ train:
   epochs: 50
 
 model:
-  input_size: 40
+  input_size: 6000
   hidden_size: 128
   embedding_size: 256
   num_layers: 3
+
+data:
+  waveform_length: 152840 # in order to make spectrograms of length 150
+  num_speakers: 246
+  num_utterances: 80
+  spec_length: 150
+  spec_channels: 40
