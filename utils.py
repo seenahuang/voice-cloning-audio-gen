@@ -33,33 +33,17 @@ def load_test():
                                            download=not os.path.isdir('./data/LibriSpeech/test-clean'))
 
 
-def generate_spectrograms(data, device):
+def generate_spectrograms(data, device, spec_size):
     spec_gen = SpecGen()
     spec_gen.to(device)
-    #TODO: figure out how to make spectrograms the same size
-    # I think slicing them is better to ensure we have multiple spectrograms
-    # per speaker within one batch so that the loss can actually calculate similarity
-    # within the same speaker. So maybe we take spectrograms of size like 50 and pad ones that
-    # end up being smaller but still above a threshold
-    # e.g. one waveform would result in spectrogram of size 230. We end up with 4
-    # specs of size 50 and pad the last one from 30->50. But if the original size would be like
-    # 215, we don't pad the last one that's size 15 (just discard it)
-    spec_size = 268
 
-    spectrograms = torch.empty((len(data), spec_size, 40))
-    speakers = torch.empty((len(data)))
+    spectrograms = torch.empty((len(data), data[0].shape[0], spec_size[0], spec_size[1]))
 
-    for idx, (waveform, _, _, speaker, _, _) in enumerate(data):
-        spectrogram = spec_gen(waveform.to(device))
-        if spectrogram.shape[1] < spec_size:
-            pad_amount = spec_size - spectrogram.shape[1]
-            first_pad = math.ceil(pad_amount/2)
-            second_pad = math.floor(pad_amount/2)
-            spectrogram = torch.nn.functional.pad(input=spectrogram, pad=(first_pad, second_pad), value=0)
-        spectrograms[idx] = torch.transpose(spectrogram, 0, 1)
-        speakers[idx] = speaker
+    for idx, waveforms in enumerate(data):
+        spectrogram = spec_gen(waveforms.to(device))
+        spectrograms[idx] = torch.transpose(spectrogram, 1, 2)
 
-    return spectrograms, speakers
+    return spectrograms.flatten(2, 3)
 
 
 def retrieve_hyperparams(config_file_name):
@@ -74,15 +58,50 @@ def retrieve_hyperparams(config_file_name):
     return params
 
 
+def preprocess_data(librispeech, removed_speakers, num_speakers, num_utterances, waveform_length, data_type):
+    final_data = torch.empty((num_speakers, num_utterances, waveform_length))
+    speaker_to_index = {}
+    furthest_index = 0
+    for waveform, _, _, speaker, _, _ in librispeech:
+        if speaker in removed_speakers:
+            continue
+
+        if speaker not in speaker_to_index:
+            speaker_to_index[speaker] = (furthest_index, 0)
+            curr_index = furthest_index
+            furthest_index += 1
+            m = 0
+        else:
+            curr_index, m = speaker_to_index[speaker]
+            if m >= 80:
+                continue
+            speaker_to_index[speaker] = (curr_index, m+1)
+
+        if waveform.shape[1] < waveform_length:
+            total_pad = waveform_length-waveform.shape[1]
+            l_pad = math.ceil(total_pad / 2)
+            r_pad = math.floor(total_pad / 2)
+            final_waveform = torch.nn.functional.pad(waveform, (l_pad, r_pad))
+        else:
+            total_slice = waveform.shape[1] - waveform_length
+            l_slice = math.ceil(total_slice / 2)
+            r_slice = math.floor(total_slice / 2)
+            final_waveform = waveform[0, l_slice:waveform.shape[1]-r_slice].unsqueeze(0)
+
+        final_data[curr_index, m] = final_waveform
+
+    torch.save(final_data, f'./data/processed/{data_type}.pt')
+    return final_data
+
+
 def train(epoch, data_loader, model, optimizer, criterion):
-    for idx, (spectrograms, speakers) in enumerate(data_loader):
+    for idx, spectrograms in enumerate(data_loader):
         if torch.cuda.is_available():
             spectrograms = spectrograms.cuda()
-            speakers = speakers.cuda()
 
         out = model.forward(spectrograms)
-        # TODO: make sure loss forward method uses embeddings, speaker separated?
-        loss = criterion(out, speakers)
+
+        loss = criterion(out)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
