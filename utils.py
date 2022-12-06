@@ -5,7 +5,7 @@ from yaml import safe_load
 import torch
 import math
 
-
+#TODO: move to dataloader.py
 def load_train():
     if not os.path.isdir('./data'):
         os.makedirs('./data')
@@ -14,7 +14,7 @@ def load_train():
                                            url="train-clean-100",
                                            download=not os.path.isdir('./data/LibriSpeech/train-clean-100'))
 
-
+#TODO: move to dataloader.py
 def load_validation():
     if not os.path.isdir('./data'):
         os.makedirs('./data')
@@ -23,7 +23,7 @@ def load_validation():
                                            url="dev-clean",
                                            download=not os.path.isdir('./data/LibriSpeech/dev-clean'))
 
-
+#TODO: move to dataloader.py
 def load_test():
     if not os.path.isdir('./data'):
         os.makedirs('./data')
@@ -32,7 +32,7 @@ def load_test():
                                            url="test-clean",
                                            download=not os.path.isdir('./data/LibriSpeech/test-clean'))
 
-
+#TODO: move to dataloader.py
 def generate_spectrograms(data, device, spec_size):
     spec_gen = SpecGen()
     spec_gen.to(device)
@@ -57,7 +57,7 @@ def retrieve_hyperparams(config_file_name):
 
     return params
 
-
+#TODO: Move to dataloader.py
 def preprocess_data(librispeech, removed_speakers, num_speakers, num_utterances, waveform_length, data_type):
     final_data = torch.empty((num_speakers, num_utterances, waveform_length))
     speaker_to_index = {}
@@ -92,18 +92,3 @@ def preprocess_data(librispeech, removed_speakers, num_speakers, num_utterances,
 
     torch.save(final_data, f'./data/processed/{data_type}.pt')
     return final_data
-
-
-def train(epoch, data_loader, model, optimizer, criterion):
-    for idx, spectrograms in enumerate(data_loader):
-        if torch.cuda.is_available():
-            spectrograms = spectrograms.cuda()
-
-        out = model.forward(spectrograms)
-
-        loss = criterion(out)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        #TODO: calculate performance metric and print out update?
