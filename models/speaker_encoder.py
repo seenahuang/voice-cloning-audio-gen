@@ -27,9 +27,16 @@ class SpeakerEncoder(torch.nn.Module):
         :param data: Tensor of mel spectrograms in the shape of (num_speakers, num_utterances, frames*channels)
         :return speaker embeddings per utterance of shape (num_speakers, num_utterances, embedding_size)
         """
-        _, (hidden, _) = self.LSTM(data)
-        # apply linear to hidden state of the last layer
-        embeddings = self.relu(self.linear(hidden[-1]))
-        norm = torch.linalg.norm(embeddings, dim=1, ord=2)
-        embeddings_norm = torch.div(torch.transpose(embeddings, 0, 1), norm)
-        return torch.transpose(embeddings_norm, 0, 1)
+        out = None
+        for speaker_data in data:
+            _, (hidden, _) = self.LSTM(speaker_data)
+            # apply linear to hidden state of the last layer
+            embeddings = self.relu(self.linear(hidden[-1]))
+            norm = torch.linalg.norm(embeddings, dim=1, ord=2)
+            embeddings_norm = torch.div(torch.transpose(embeddings, 0, 1), norm)
+            speaker_out = torch.transpose(embeddings_norm, 0, 1).unsqueeze(0)
+            if out is None:
+                out = speaker_out
+            else:
+                out = torch.cat((out, speaker_out), dim=0)
+        return out
