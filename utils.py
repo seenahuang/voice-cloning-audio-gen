@@ -43,7 +43,7 @@ def generate_spectrograms(data, device, spec_size):
         spectrogram = spec_gen(waveforms.to(device))
         spectrograms[idx] = torch.transpose(spectrogram, 1, 2)
 
-    return spectrograms.flatten(2, 3)
+    return spectrograms
 
 
 def retrieve_hyperparams(config_file_name):
