@@ -28,6 +28,7 @@ def train(epoch, data_loader, model, optimizer, criterion):
 
         print(f'Epoch: [{epoch}][{idx}/{len(data_loader)}]\t'
               f'Loss: {loss} ({torch.mean(losses[:idx+1])})')
+        return torch.mean(losses)
 
 def validate(epoch, data_loader, model, optimizer, criterion):
     losses = torch.zeros(len(data_loader))
@@ -109,19 +110,26 @@ if __name__ == "__main__":
 
     best_loss = sys.maxsize
     best_model = None
+
+    train_losses = []
+    val_losses = []
+
     for epoch in range(params['epochs']):
-        train(epoch, train_loader, encoder, optimizer, criterion)
+        curr_train_loss = train(epoch, train_loader, encoder, optimizer, criterion)
+        train_losses.append(curr_train_loss.item())
         #TODO:
         # 1. add in validation function and make a call to it
         # 2. if valid_loss < best_loss, update best_loss and deepcopy the model
         # 3. print out best loss
         # 4. save model checkpoint
-        curr_loss = validate(epoch, train_loader, encoder, optimizer, criterion)
+        curr_val_loss = validate(epoch, train_loader, encoder, optimizer, criterion)
+        val_losses.append(curr_val_loss.item())
 
-        if curr_loss < best_loss:
-            best_loss = curr_loss
+        if curr_val_loss < best_loss:
+            best_loss = curr_val_loss
             best_model = copy.deepcopy(encoder)
-
     print(f'Best Loss: {best_loss}')
+    torch.save(best_model.state_dict(), './checkpoints/speaker_encoder.pth')
     #TODO:
     # plot visualizations for test data?
+    utils.plot_curves(range(params['epochs']), train_losses, val_losses)
