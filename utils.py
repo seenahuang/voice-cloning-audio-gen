@@ -5,6 +5,8 @@ from yaml import safe_load
 import torch
 import math
 
+import matplotlib.pyplot as plt
+
 #TODO: move to dataloader.py
 def load_train():
     if not os.path.isdir('./data'):
@@ -45,6 +47,20 @@ def generate_spectrograms(data, device, spec_size):
 
     return spectrograms
 
+def plot_curves(epochs, train_loss_history, valid_loss_history):
+    """
+    Plot learning curves with matplotlib.
+    :param train_loss_history: training loss history of epochs
+    :param valid_loss_history: validation loss history of epochs
+    :return: None, save figure in the current directory
+    """
+    plt.plot(epochs, train_loss_history, 'g', label='Training loss')
+    plt.plot(epochs, valid_loss_history, 'b', label='Validation loss')
+    plt.title('Losses')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+
+    plt.savefig('plots.png')
 
 def retrieve_hyperparams(config_file_name):
     with open(f'./configs/{config_file_name}') as f:
