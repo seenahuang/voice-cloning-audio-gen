@@ -7,7 +7,7 @@ import os
 import sys
 import copy
 
-REMOVED_SPEAKERS = {1992, 8014, 7312, 445, 1183} # speaker IDs that have fewer than 80 utterances
+REMOVED_SPEAKERS_TRAINING = {1992, 8014, 7312, 445, 1183} # speaker IDs that have fewer than 80 utterances for training
 
 
 def train(epoch, data_loader, model, optimizer, criterion):
@@ -27,10 +27,11 @@ def train(epoch, data_loader, model, optimizer, criterion):
         losses[idx] = loss
 
         print(f'Epoch: [{epoch}][{idx}/{len(data_loader)}]\t'
-              f'Loss: {loss} ({torch.mean(losses[:idx+1])})')
-        return torch.mean(losses)
+              f'Training Loss: {loss} ({torch.mean(losses[:idx+1])})')
 
-def validate(epoch, data_loader, model, optimizer, criterion):
+    return torch.mean(losses)
+
+def validate(epoch, data_loader, model, criterion):
     losses = torch.zeros(len(data_loader))
 
     for idx, spectrograms in enumerate(data_loader):
@@ -44,12 +45,10 @@ def validate(epoch, data_loader, model, optimizer, criterion):
 
         losses[idx] = loss
 
-        print(f'Epoch: [{epoch}][{idx}/{len(data_loader)}]\t'
-              f'Loss: {loss} ({torch.mean(losses[:idx + 1])})')
+    print(f'Epoch: [{epoch}]\t'
+          f'Validation Loss: {loss} ({torch.mean(losses)})\n')
 
     return torch.mean(losses)
-
-
 
 
 if __name__ == "__main__":
@@ -63,42 +62,39 @@ if __name__ == "__main__":
 
     if os.path.isfile('./data/processed/train.pt'):
         train_data = torch.load('./data/processed/train.pt')
-        validation_data = torch.load('.data/processed/validation.pt')
     else:
         train_data = utils.preprocess_data(train_librispeech,
-                                           REMOVED_SPEAKERS,
-                                           params['num_speakers'],
-                                           params['num_utterances'],
-                                           params['waveform_length'],
-                                           'train.pt')
+                                           REMOVED_SPEAKERS_TRAINING,
+                                           params['train_num_speakers'],
+                                           params['train_num_utterances'],
+                                           params['train_waveform_length'],
+                                           'train')
+
+    if os.path.isfile('./data/processed/validate.pt'):
+        validation_data = torch.load('.data/processed/validation.pt')
+    else:
         validation_data = utils.preprocess_data(valid_librispeech,
-                                           REMOVED_SPEAKERS,
-                                           params['num_speakers'],
-                                           params['num_utterances'],
-                                           params['waveform_length'],
-                                           'validation.pt')
+                                                {},
+                                                params['validate_num_speakers'],
+                                                params['validate_num_utterances'],
+                                                params['validate_waveform_length'],
+                                                'validation')
 
-
-    #TODO:
-    # preprocess validation and test data as well, need to find which speakers need to be removed
-
-    spec_size = (params['spec_length'], params['spec_channels'])
+    train_spec_size = (params['train_spec_length'], params['spec_channels'])
+    validate_spec_size = (params['validate_spec_length'], params['spec_channels'])
     train_loader = torch.utils.data.DataLoader(dataset=train_data,
                                                batch_size=params['batch_size'],
                                                shuffle=True,
                                                collate_fn=lambda x: utils.generate_spectrograms(x,
                                                                                                 device,
-                                                                                                spec_size))
-
-    #TODO:
-    # initialize validation_loader and test_loader
+                                                                                                train_spec_size))
 
     validation_loader = torch.utils.data.DataLoader(dataset=validation_data,
                                                batch_size=params['batch_size'],
                                                shuffle=True,
                                                collate_fn=lambda x: utils.generate_spectrograms(x,
                                                                                                 device,
-                                                                                                spec_size))
+                                                                                                validate_spec_size))
 
     encoder = SpeakerEncoder(params['input_size'],
                              params['hidden_size'],
@@ -117,18 +113,14 @@ if __name__ == "__main__":
     for epoch in range(params['epochs']):
         curr_train_loss = train(epoch, train_loader, encoder, optimizer, criterion)
         train_losses.append(curr_train_loss.item())
-        #TODO:
-        # 1. add in validation function and make a call to it
-        # 2. if valid_loss < best_loss, update best_loss and deepcopy the model
-        # 3. print out best loss
-        # 4. save model checkpoint
-        curr_val_loss = validate(epoch, train_loader, encoder, optimizer, criterion)
+
+        curr_val_loss = validate(epoch, validation_loader, encoder, criterion)
         val_losses.append(curr_val_loss.item())
 
         if curr_val_loss < best_loss:
             best_loss = curr_val_loss
             best_model = copy.deepcopy(encoder)
-    print(f'Best Loss: {best_loss}')
+    print(f'Best Loss: {best_loss}\n')
     torch.save(best_model.state_dict(), './checkpoints/speaker_encoder.pth')
     #TODO:
     # plot visualizations for test data?

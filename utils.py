@@ -4,7 +4,6 @@ from dataloader import SpecGen
 from yaml import safe_load
 import torch
 import math
-
 import matplotlib.pyplot as plt
 
 #TODO: move to dataloader.py
@@ -89,7 +88,7 @@ def preprocess_data(librispeech, removed_speakers, num_speakers, num_utterances,
             m = 0
         else:
             curr_index, m = speaker_to_index[speaker]
-            if m >= 80:
+            if m >= num_utterances:
                 continue
             speaker_to_index[speaker] = (curr_index, m+1)
 
