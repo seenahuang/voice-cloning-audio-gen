@@ -4,7 +4,6 @@ from dataloader import SpecGen
 from yaml import safe_load
 import torch
 import math
-
 import matplotlib.pyplot as plt
 
 #TODO: move to dataloader.py
@@ -60,7 +59,7 @@ def plot_curves(epochs, train_loss_history, valid_loss_history):
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
 
-    plt.savefig('plots.png')
+    plt.savefig('plots/loss_plot.png')
 
 def retrieve_hyperparams(config_file_name):
     with open(f'./configs/{config_file_name}') as f:
@@ -89,7 +88,7 @@ def preprocess_data(librispeech, removed_speakers, num_speakers, num_utterances,
             m = 0
         else:
             curr_index, m = speaker_to_index[speaker]
-            if m >= 80:
+            if m >= num_utterances:
                 continue
             speaker_to_index[speaker] = (curr_index, m+1)
 

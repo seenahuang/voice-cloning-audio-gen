@@ -1,6 +1,6 @@
 train:
   batch_size: 16
-  learning_rate: 0.05
+  learning_rate: 0.01
   epochs: 50
 
 model:
@@ -10,8 +10,13 @@ model:
   num_layers: 3
 
 data:
-  waveform_length: 152840 # in order to make spectrograms of length 150
-  num_speakers: 246
-  num_utterances: 80
-  spec_length: 150
+  train_waveform_length: 152840 # in order to make spectrograms of length 150
+  train_num_speakers: 246
+  train_num_utterances: 80 # reasonable number to keep data standardized and not remove a lot of speakers
+  validate_waveform_length: 102000 # validation waveforms are shorter, so lower length for less padding
+  validate_num_speakers: 40
+  validate_num_utterances: 36 # minimum number of utterances for speaker in validation data
+  train_spec_length: 150
+  validate_spec_length: 100
   spec_channels: 40
+
