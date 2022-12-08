@@ -28,6 +28,6 @@ embeddings = model(data.to(device))
 
 criterion = EndToEndLoss(10.0, -5.0, device)
 centroids = torch.mean(embeddings, dim=1)
-a = criterion.cos_similarity(embeddings, centroids)
-
-print()
+similarity_matrix = criterion.cos_similarity(embeddings, centroids)
+#TODO: plot similarity matrix,
+# figure out how to plot embeddings (if it's not too much work, we need dimensionality reduction
