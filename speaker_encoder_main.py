@@ -26,7 +26,7 @@ def train(epoch, data_loader, model, optimizer, criterion):
 
         losses[idx] = loss
 
-        print(f'Epoch: [{epoch}][{idx}/{len(data_loader)}]\t'
+        print(f'Epoch: [{epoch}][{idx+1}/{len(data_loader)}]\t'
               f'Training Loss: {loss} ({torch.mean(losses[:idx+1])})')
 
     return torch.mean(losses)

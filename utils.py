@@ -59,7 +59,7 @@ def plot_curves(epochs, train_loss_history, valid_loss_history):
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
 
-    plt.savefig('plots.png')
+    plt.savefig('plots/loss_plot.png')
 
 def retrieve_hyperparams(config_file_name):
     with open(f'./configs/{config_file_name}') as f:
