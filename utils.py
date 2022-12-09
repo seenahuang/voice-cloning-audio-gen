@@ -82,6 +82,8 @@ def preprocess_data(librispeech, removed_speakers, num_speakers, num_utterances,
             continue
 
         if speaker not in speaker_to_index:
+            if furthest_index >= num_speakers:
+                break
             speaker_to_index[speaker] = (furthest_index, 0)
             curr_index = furthest_index
             furthest_index += 1
