@@ -16,6 +16,8 @@ data:
   validate_waveform_length: 102000 # validation waveforms are shorter, so lower length for less padding
   validate_num_speakers: 40
   validate_num_utterances: 36 # minimum number of utterances for speaker in validation data
+  test_num_speakers: 5
+  test_num_utterances: 5
   train_spec_length: 150
   validate_spec_length: 100
   spec_channels: 40
