@@ -122,6 +122,4 @@ if __name__ == "__main__":
             best_model = copy.deepcopy(encoder)
     print(f'Best Loss: {best_loss}\n')
     torch.save(best_model.state_dict(), './checkpoints/speaker_encoder.pth')
-    #TODO:
-    # plot visualizations for test data?
     utils.plot_curves(range(params['epochs']), train_losses, val_losses)
