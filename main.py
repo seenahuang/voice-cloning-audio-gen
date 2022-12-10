@@ -65,7 +65,8 @@ if __name__ == "__main__":
 
     #initialize tacotron
     tacotron_path = "checkpoints/tacotron2.pt"
-    tacotron = None
+    tacotron = torch.load(tacotron_path)
+    tacotron.cuda().eval()
 
 
     #initialize waveglow
