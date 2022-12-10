@@ -6,7 +6,7 @@ import torch
 import math
 import matplotlib.pyplot as plt
 
-#TODO: move to dataloader.py
+
 def load_train():
     if not os.path.isdir('./data'):
         os.makedirs('./data')
@@ -15,7 +15,7 @@ def load_train():
                                            url="train-clean-100",
                                            download=not os.path.isdir('./data/LibriSpeech/train-clean-100'))
 
-#TODO: move to dataloader.py
+
 def load_validation():
     if not os.path.isdir('./data'):
         os.makedirs('./data')
@@ -24,7 +24,7 @@ def load_validation():
                                            url="dev-clean",
                                            download=not os.path.isdir('./data/LibriSpeech/dev-clean'))
 
-#TODO: move to dataloader.py
+
 def load_test():
     if not os.path.isdir('./data'):
         os.makedirs('./data')
@@ -33,7 +33,7 @@ def load_test():
                                            url="test-clean",
                                            download=not os.path.isdir('./data/LibriSpeech/test-clean'))
 
-#TODO: move to dataloader.py
+
 def generate_spectrograms(data, device, spec_size):
     spec_gen = SpecGen()
     spec_gen.to(device)
@@ -72,7 +72,7 @@ def retrieve_hyperparams(config_file_name):
 
     return params
 
-#TODO: Move to dataloader.py
+
 def preprocess_data(librispeech, removed_speakers, num_speakers, num_utterances, waveform_length, data_type):
     final_data = torch.empty((num_speakers, num_utterances, waveform_length))
     speaker_to_index = {}

@@ -2,7 +2,6 @@ from models.EndToEndLoss import EndToEndLoss
 from models.speaker_encoder import SpeakerEncoder
 import utils
 import torch
-import numpy as np
 from matplotlib import pyplot as plt
 
 
