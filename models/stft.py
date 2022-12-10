@@ -29,7 +29,7 @@ import numpy as np
 import torch.nn.functional as F
 from torch.autograd import Variable
 from scipy.signal import get_window
-from librosa.util import pad_center, tiny
+from librosa.util import pad_center, tiny, normalize
 
 
 class STFT(torch.nn.Module):
@@ -161,8 +161,8 @@ class STFT(torch.nn.Module):
 
         # Compute the squared window at the desired length
         win_sq = get_window(window, win_length, fftbins=True)
-        win_sq = librosa_util.normalize(win_sq, norm=norm) ** 2
-        win_sq = librosa_util.pad_center(win_sq, n_fft)
+        win_sq = normalize(win_sq, norm=norm) ** 2
+        win_sq = pad_center(win_sq, n_fft)
 
         # Fill the envelope
         for i in range(n_frames):
