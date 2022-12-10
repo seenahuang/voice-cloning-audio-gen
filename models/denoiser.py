@@ -1,5 +1,5 @@
 import torch
-from stft import STFT
+from .stft import STFT
 
 """
 This model implementation is taken from https://github.com/NVIDIA/waveglow
