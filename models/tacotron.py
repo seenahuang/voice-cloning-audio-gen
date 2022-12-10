@@ -6,6 +6,16 @@ import torch.nn.functional as F
 from pathlib import Path
 from typing import Union
 
+"""
+This model implementation is taken from https://github.com/CorentinJ/Real-Time-Voice-Cloning
+that is based on the paper 'Transfer Learning from Speaker Verification to
+Multispeaker Text-To-Speech Synthesis' by Jia et al.
+
+This implementation improves the base Tacotron2 model by 
+concatenating custom speaker embeddings to the character embeddings. We have taken a pretrained version
+of this model to use with our custom speaker embeddings
+"""
+
 
 class HighwayNetwork(nn.Module):
     def __init__(self, size):
