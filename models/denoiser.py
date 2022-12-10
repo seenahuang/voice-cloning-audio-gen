@@ -1,5 +1,12 @@
 import torch
-from stft import STFT
+from .stft import STFT
+
+"""
+This model implementation is taken from https://github.com/NVIDIA/waveglow
+that is based on the paper 'WAVEGLOW: A FLOW-BASED GENERATIVE NETWORK FOR SPEECH SYNTHESIS' by Jia et al.
+
+The goal of this class is to remove the bias from the audio produced by the waveglow model. 
+"""
 
 
 class Denoiser(torch.nn.Module):
