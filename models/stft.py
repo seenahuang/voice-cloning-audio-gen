@@ -108,7 +108,7 @@ class STFT(torch.nn.Module):
             padding=0)
 
         if self.window is not None:
-            window_sum = window_sumsquare(
+            window_sum = self.window_sumsquare(
                 self.window, magnitude.size(-1), hop_length=self.hop_length,
                 win_length=self.win_length, n_fft=self.filter_length,
                 dtype=np.float32)
@@ -116,7 +116,7 @@ class STFT(torch.nn.Module):
             approx_nonzero_indices = torch.from_numpy(
                 np.where(window_sum > tiny(window_sum))[0])
             window_sum = torch.autograd.Variable(
-                torch.from_numpy(window_sum), requires_grad=False)
+                torch.from_numpy(window_sum), requires_grad=False).cuda()
             inverse_transform[:, :, approx_nonzero_indices] /= window_sum[approx_nonzero_indices]
 
             # scale by hop ratio
@@ -127,7 +127,7 @@ class STFT(torch.nn.Module):
 
         return inverse_transform
 
-    def window_sumsquare(window, n_frames, hop_length=200, win_length=800,
+    def window_sumsquare(self, window, n_frames, hop_length=200, win_length=800,
                          n_fft=800, dtype=np.float32, norm=None):
         """
         # from librosa 0.6
