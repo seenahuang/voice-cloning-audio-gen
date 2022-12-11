@@ -58,6 +58,7 @@ def plot_curves(epochs, train_loss_history, valid_loss_history):
     plt.title('Losses')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
+    plt.legend()
 
     plt.savefig('plots/loss_plot.png')
 

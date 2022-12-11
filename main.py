@@ -31,7 +31,7 @@ if __name__ == "__main__":
     sample_rates.append(sample_rate)
 
     #initialize speaker encoder
-    speaker_encoder_checkpoint_path = "checkpoints/speaker_encoder.pth"
+    speaker_encoder_checkpoint_path = "checkpoints/speaker_encoder/speaker_encoder.pth"
     speaker_encoder = SpeakerEncoder(params['input_size'],
                              params['hidden_size'],
                              device,
@@ -71,10 +71,6 @@ if __name__ == "__main__":
     waveglow = waveglow.remove_weightnorm(waveglow)
     waveglow = waveglow.to('cuda')
     waveglow.eval()
-
-    # for k in waveglow.convinv:
-    #     k.float()
-    # denoiser = Denoiser(waveglow)
 
     # generate wav file given each text/embedding combination
     for i, text in enumerate(texts):
