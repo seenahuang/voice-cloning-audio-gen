@@ -80,64 +80,86 @@ if __name__ == "__main__":
 
     train_spec_size = (params['train_spec_length'], params['spec_channels'])
     validate_spec_size = (params['validate_spec_length'], params['spec_channels'])
-    train_loader = torch.utils.data.DataLoader(dataset=train_data,
-                                               batch_size=params['batch_size'],
-                                               shuffle=True,
-                                               collate_fn=lambda x: utils.generate_spectrograms(x,
-                                                                                                device,
-                                                                                                train_spec_size))
-
-    validation_loader = torch.utils.data.DataLoader(dataset=validation_data,
-                                               batch_size=params['batch_size'],
-                                               shuffle=True,
-                                               collate_fn=lambda x: utils.generate_spectrograms(x,
-                                                                                                device,
-                                                                                                validate_spec_size))
 
     encoder = SpeakerEncoder(params['input_size'],
                              params['hidden_size'],
                              device,
                              num_layers=params['num_layers'],
                              embedding_size=params['embedding_size'])
-    optimizer = torch.optim.SGD(encoder.parameters(), params['learning_rate'])
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=params['decay_step'], gamma=params['decay_gamma'])
-    criterion = EndToEndLoss(10.0, -5.0, device)
 
-    # with open('speaker_encoder_loss.json', 'r') as f:
-    #     loss_dict = json.load(f)
-    #     overall_best_loss = loss_dict['best_loss']
-
-    best_model = None
     best_loss = sys.maxsize
+    best_model = None
+    best_train_losses = []
+    best_val_losses = []
+    best_params = {}
 
-    train_losses = []
-    val_losses = []
+    batch_sizes = [4, 8, 16]
+    learning_rates = [i/100 for i in range(10, 21)]
+    decay_gammas = [i/100 for i in range(50, 100, 10)]
+    decay_steps = [5, 10]
 
-    for epoch in range(params['epochs']):
-        curr_train_loss = train(epoch, train_loader, encoder, optimizer, criterion)
-        train_losses.append(curr_train_loss.item())
+    i = 1
+    total_steps = len(batch_sizes) * len(learning_rates) * len(decay_gammas) * len(decay_steps)
+    for batch_size in batch_sizes:
+        for learning_rate in learning_rates:
+            for decay_gamma in decay_gammas:
+                for decay_step in decay_steps:
+                    better_model_found = False
 
-        curr_val_loss = validate(epoch, validation_loader, encoder, criterion)
-        val_losses.append(curr_val_loss.item())
+                    print(f"\n----------Step {i}/{total_steps}----------\n")
 
-        if curr_val_loss < best_loss:
-            best_loss = curr_val_loss
-            best_model = copy.deepcopy(encoder)
+                    train_loader = torch.utils.data.DataLoader(dataset=train_data,
+                                                               batch_size=batch_size,
+                                                               shuffle=True,
+                                                               collate_fn=lambda x: utils.generate_spectrograms(x,
+                                                                                                                device,
+                                                                                                                train_spec_size))
 
-        scheduler.step()
+                    validation_loader = torch.utils.data.DataLoader(dataset=validation_data,
+                                                                    batch_size=batch_size,
+                                                                    shuffle=True,
+                                                                    collate_fn=lambda x: utils.generate_spectrograms(x,
+                                                                                                                     device,
+                                                                                                                     validate_spec_size))
 
-    print(f'Best Loss: {best_loss}\n')
+                    optimizer = torch.optim.SGD(encoder.parameters(), learning_rate)
+                    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, decay_step, decay_gamma)
+                    criterion = EndToEndLoss(10.0, -5.0, device)
 
-    #if best_loss < overall_best_loss:
+                    train_losses = []
+                    val_losses = []
+
+                    for epoch in range(params['epochs']):
+                        curr_train_loss = train(epoch, train_loader, encoder, optimizer, criterion)
+                        train_losses.append(curr_train_loss.item())
+
+                        curr_val_loss = validate(epoch, validation_loader, encoder, criterion)
+                        val_losses.append(curr_val_loss.item())
+
+                        if curr_val_loss < best_loss:
+                            best_loss = curr_val_loss
+                            best_model = copy.deepcopy(encoder)
+                            better_model_found = True
+
+                        scheduler.step()
+
+                    if better_model_found:
+                        best_train_losses = train_losses
+                        best_val_losses = val_losses
+                        best_params = {
+                            "batch_size": batch_size,
+                            "learning_rate": learning_rate,
+                            "decay_gamma": decay_gamma,
+                            "decay_step": decay_step,
+                            "loss": best_loss
+                        }
+
+                    i += 1
+
     torch.save(best_model.state_dict(), 'checkpoints/speaker_encoder/speaker_encoder.pth')
+    utils.plot_curves(range(params['epochs']), best_train_losses, best_val_losses)
 
-        # loss_dict['best_loss'] = int(best_loss)
-        # with open('speaker_encoder_loss.json', "r+") as f:
-        #     f.seek(0)
-        #     f.write(json.dumps(loss_dict))
-        #     f.truncate()
-
-    utils.plot_curves(range(params['epochs']), train_losses, val_losses)
-    #     print('Found better model')
-    # else:
-    #     print('Did not find better model')
+    with open('best_speaker_encoder.json', "r+") as f:
+        f.seek(0)
+        f.write(json.dumps(best_params), indent=4)
+        f.truncate()
