@@ -40,13 +40,14 @@ class EndToEndLoss(torch.nn.Module):
             for utterance_idx, utterance in enumerate(speaker):
                 # cosign similarity function described in https://arxiv.org/pdf/1509.08062.pdf
                 new_centroids = self.calc_new_centroids(emb_vec, centroid, speaker_idx, utterance_idx)
-                cs_row.append(torch.mm(utterance.unsqueeze(1).transpose(0, 1), new_centroids.transpose(0, 1)) / (torch.norm(utterance) * torch.norm(new_centroids, dim=1)))
+                cs_row.append(torch.clamp(torch.mm(utterance.unsqueeze(1).transpose(0, 1), new_centroids.transpose(0, 1)) / (torch.norm(utterance) * torch.norm(new_centroids, dim=1)), 1e-6))
             cs_row = torch.cat(cs_row, dim=0)
             cos_sim_matrix.append(cs_row)
         return torch.stack(cos_sim_matrix)
 
 
     def scaled_cos_similarity(self, emb_vec, centroid):
+        torch.clamp(self.w, 1e-6)
         return self.w * self.cos_similarity(emb_vec, centroid) + self.b
 
     def softmax_loss(self, emb_vec, cos_sim_matrix):
