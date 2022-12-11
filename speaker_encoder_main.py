@@ -6,13 +6,13 @@ from torch.utils.data import DataLoader
 import os
 import sys
 import copy
+import json
 
 REMOVED_SPEAKERS_TRAINING = {1992, 8014, 7312, 445, 1183} # speaker IDs that have fewer than 80 utterances for training
 
 
 def train(epoch, data_loader, model, optimizer, criterion):
     losses = torch.zeros(len(data_loader))
-
     for idx, spectrograms in enumerate(data_loader):
         if torch.cuda.is_available():
             spectrograms = spectrograms.cuda()
@@ -46,7 +46,7 @@ def validate(epoch, data_loader, model, criterion):
         losses[idx] = loss
 
     print(f'Epoch: [{epoch}]\t'
-          f'Validation Loss: {loss} ({torch.mean(losses)})\n')
+          f'Validation Loss: {torch.mean(losses)}\n')
 
     return torch.mean(losses)
 
@@ -57,8 +57,6 @@ if __name__ == "__main__":
 
     train_librispeech = utils.load_train()
     valid_librispeech = utils.load_validation()
-    test_librispeech = utils.load_test()
-
 
     if os.path.isfile('./data/processed/train.pt'):
         train_data = torch.load('./data/processed/train.pt')
@@ -102,10 +100,15 @@ if __name__ == "__main__":
                              num_layers=params['num_layers'],
                              embedding_size=params['embedding_size'])
     optimizer = torch.optim.SGD(encoder.parameters(), params['learning_rate'])
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=params['decay_step'], gamma=params['decay_gamma'])
     criterion = EndToEndLoss(10.0, -5.0, device)
 
-    best_loss = sys.maxsize
+    # with open('speaker_encoder_loss.json', 'r') as f:
+    #     loss_dict = json.load(f)
+    #     overall_best_loss = loss_dict['best_loss']
+
     best_model = None
+    best_loss = sys.maxsize
 
     train_losses = []
     val_losses = []
@@ -120,6 +123,21 @@ if __name__ == "__main__":
         if curr_val_loss < best_loss:
             best_loss = curr_val_loss
             best_model = copy.deepcopy(encoder)
+
+        scheduler.step()
+
     print(f'Best Loss: {best_loss}\n')
-    torch.save(best_model.state_dict(), './checkpoints/speaker_encoder.pth')
+
+    #if best_loss < overall_best_loss:
+    torch.save(best_model.state_dict(), 'checkpoints/speaker_encoder/speaker_encoder.pth')
+
+        # loss_dict['best_loss'] = int(best_loss)
+        # with open('speaker_encoder_loss.json', "r+") as f:
+        #     f.seek(0)
+        #     f.write(json.dumps(loss_dict))
+        #     f.truncate()
+
     utils.plot_curves(range(params['epochs']), train_losses, val_losses)
+    #     print('Found better model')
+    # else:
+    #     print('Did not find better model')

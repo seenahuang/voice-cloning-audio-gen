@@ -13,7 +13,7 @@ model = SpeakerEncoder(params['input_size'],
                        device,
                        num_layers=params['num_layers'],
                        embedding_size=params['embedding_size'])
-model.load_state_dict(torch.load('checkpoints/speaker_encoder.pth'))
+model.load_state_dict(torch.load('checkpoints/speaker_encoder/speaker_encoder.pth'))
 model.eval()
 
 testing_data = utils.load_test()
