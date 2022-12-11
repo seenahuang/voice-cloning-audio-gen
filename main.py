@@ -5,6 +5,7 @@ import torch
 from outside_code.denoiser import Denoiser
 import math
 from outside_code.tacotron import Tacotron
+from outside_code.inference import Synthesizer
 
 if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -20,13 +21,13 @@ if __name__ == "__main__":
     waveform, sample_rate, text, speaker, _, _ = test_audio_gen[0]
     torchaudio.save(f"audio/speaker_{speaker}_original1.wav", waveform, sample_rate)
     waveforms.append(waveform)
-    texts.append(processor(text)[0].to(device))
+    texts.append(text)
     sample_rates.append(sample_rate)
 
     waveform, sample_rate, text, speaker, _, _ = test_audio_gen[1]
     torchaudio.save(f"audio/speaker_{speaker}_original2.wav", waveform, sample_rate)
     waveforms.append(waveform)
-    texts.append(processor(text)[0].to(device))
+    texts.append(text)
     sample_rates.append(sample_rate)
 
     #initialize speaker encoder
@@ -63,23 +64,7 @@ if __name__ == "__main__":
 
     #initialize tacotron
     tacotron_path = "checkpoints/tacotron2.pt"
-    tacotron = Tacotron(embed_dims=512,
-                        num_chars=66,
-                        encoder_dims=256,
-                        decoder_dims=128,
-                        n_mels=80,
-                        fft_bins=80,
-                        postnet_dims=512,
-                        encoder_K=5,
-                        lstm_dims=1024,
-                        postnet_K=5,
-                        num_highways=4,
-                        dropout=.5,
-                        stop_threshold=-3.4,
-                        speaker_embedding_size=256).to(device)
-    tacotron.load_state_dict(torch.load(tacotron_path)['model_state'])
-    tacotron.eval()
-
+    synthesizer = Synthesizer(tacotron_path, verbose=False)
 
     #initialize waveglow
     waveglow = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_waveglow', model_math='fp16')
@@ -93,10 +78,10 @@ if __name__ == "__main__":
 
     # generate wav file given each text/embedding combination
     for i, text in enumerate(texts):
-        mel_outputs, linear, attn_scores = tacotron.generate(text, embeddings[0,i])
-
+        mel_outputs = synthesizer.synthesize_spectrograms([text], [embeddings[0,i].detach().cpu()])
+        spec = torch.from_numpy(mel_outputs[0]).cuda()
         with torch.no_grad():
-            audio = waveglow.infer(mel_outputs, sigma=0.666)
+            audio = waveglow.infer(torch.unsqueeze(spec, dim=0), sigma=0.666)
 
         # audio_denoised = denoiser(audio.cpu(), strength=0.01)[:, 0]
         torchaudio.save(f"audio/speaker_{speaker}_gen{i+1}.wav", audio.cpu(), sample_rates[i])
