@@ -57,8 +57,6 @@ if __name__ == "__main__":
 
     train_librispeech = utils.load_train()
     valid_librispeech = utils.load_validation()
-    test_librispeech = utils.load_test()
-
 
     if os.path.isfile('./data/processed/train.pt'):
         train_data = torch.load('./data/processed/train.pt')
@@ -105,9 +103,9 @@ if __name__ == "__main__":
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=params['decay_step'], gamma=params['decay_gamma'])
     criterion = EndToEndLoss(10.0, -5.0, device)
 
-    with open('speaker_encoder_loss.json', 'r') as f:
-        loss_dict = json.load(f)
-        overall_best_loss = loss_dict['best_loss']
+    # with open('speaker_encoder_loss.json', 'r') as f:
+    #     loss_dict = json.load(f)
+    #     overall_best_loss = loss_dict['best_loss']
 
     best_model = None
     best_loss = sys.maxsize
@@ -130,16 +128,16 @@ if __name__ == "__main__":
 
     print(f'Best Loss: {best_loss}\n')
 
-    if best_loss < overall_best_loss:
-        torch.save(best_model.state_dict(), 'checkpoints/speaker_encoder/speaker_encoder.pth')
+    #if best_loss < overall_best_loss:
+    torch.save(best_model.state_dict(), 'checkpoints/speaker_encoder/speaker_encoder.pth')
 
-        loss_dict['best_loss'] = int(best_loss)
-        with open('speaker_encoder_loss.json', "r+") as f:
-            f.seek(0)
-            f.write(json.dumps(loss_dict))
-            f.truncate()
+        # loss_dict['best_loss'] = int(best_loss)
+        # with open('speaker_encoder_loss.json', "r+") as f:
+        #     f.seek(0)
+        #     f.write(json.dumps(loss_dict))
+        #     f.truncate()
 
-        utils.plot_curves(range(params['epochs']), train_losses, val_losses)
-        print('Found better model')
-    else:
-        print('Did not find better model')
+    utils.plot_curves(range(params['epochs']), train_losses, val_losses)
+    #     print('Found better model')
+    # else:
+    #     print('Did not find better model')
