@@ -30,6 +30,8 @@ class SpeakerEncoder(torch.nn.Module):
         out = None
         for speaker_data in data:
             _, (hidden, _) = self.LSTM(speaker_data)
+            if torch.isnan(hidden).any():
+                print()
             # apply linear to hidden state of the last layer
             embeddings = self.relu(self.linear(hidden[-1]))
             norm = torch.linalg.norm(embeddings, dim=1, ord=2)

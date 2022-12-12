@@ -1,5 +1,5 @@
 {"batch_size": 4,
- "learning_rate": 0.12,
- "decay_gamma": 0.8,
- "decay_step": 10,
+ "learning_rate": 0.01,
+ "decay_gamma": 0.4,
  "loss": 8.1036}
+
