@@ -1,3 +1,8 @@
+"""
+This implementation is taken from https://github.com/CorentinJ/Real-Time-Voice-Cloning helping with
+processing text and performing inference using their custom tacotron model
+"""
+
 import librosa
 import librosa.filters
 import numpy as np

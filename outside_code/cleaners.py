@@ -1,4 +1,9 @@
 """
+This implementation is taken from https://github.com/CorentinJ/Real-Time-Voice-Cloning helping with
+processing text and performing inference using their custom tacotron model
+"""
+
+"""
 Cleaners are transformations that run over the input text at both training and eval time.
 Cleaners can be selected by passing a comma-delimited list of cleaner names as the "cleaners"
 hyperparameter. Some cleaners are English-specific. You"ll typically want to use:
