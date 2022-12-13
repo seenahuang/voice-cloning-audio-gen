@@ -1,3 +1,8 @@
+"""
+This implementation is taken from https://github.com/CorentinJ/Real-Time-Voice-Cloning helping with
+processing text and performing inference using their custom tacotron model
+"""
+
 from outside_code.symbols import symbols
 import outside_code.cleaners as cleaners
 import re
